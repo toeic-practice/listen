@@ -14,22 +14,22 @@
 <header class="hero"><h1>TOEIC 多益聽力線上練習中心</h1><p>選擇練習回次｜MP3 聽力播放・中英文逐字稿・錯題複習・作答紀錄</p></header>
 <section class="intro"><h2>選擇練習回次</h2><span>第 1～10 回</span></section>
 <section class="grid" id="chapterGrid" aria-label="聽力練習回次列表"></section>
-<section class="note"><strong>使用說明：</strong>點選已開放的回次即可開始作答。每回可在題目頁輸入使用者代號，不輸入時使用本機模式；目前紀錄儲存在此裝置，尚未啟用 Firebase 雲端同步。未來新增回次，只要上傳相對應的 <code>Part02/index.html</code> 等檔案，並把本頁設定中的 <code>available</code> 改為 <code>true</code> 即可開放。</section>
+<section class="note"><strong>使用說明：</strong>點選已開放的回次即可開始作答。每回可在題目頁輸入使用者代號，不輸入時使用本機模式；第 1、2 回已建置題庫頁面；第 2 回圖片及 MP3 尚待補齊。第 3～10 回已開放進入，但目前僅顯示待建置說明，尚無題目可作答。作答紀錄依各回頁面的 Firebase 驗證及同步狀態運作。</section>
 <footer class="footer">TOEIC 聽力練習中心｜自主練習使用</footer>
 </main>
 <script>
 // 章節管理：新回次完成並上傳 index.html 後，再將 available 改為 true。
 const CHAPTERS = [
   {number:1, title:'第 1 回', description:'完整聽力題庫・100 題', path:'Part01/', available:true},
-  {number:2, title:'第 2 回', description:'聽力題庫製作中', path:'Part02/', available:false},
-  {number:3, title:'第 3 回', description:'聽力題庫製作中', path:'Part03/', available:false},
-  {number:4, title:'第 4 回', description:'聽力題庫製作中', path:'Part04/', available:false},
-  {number:5, title:'第 5 回', description:'聽力題庫製作中', path:'Part05/', available:false},
-  {number:6, title:'第 6 回', description:'聽力題庫製作中', path:'Part06/', available:false},
-  {number:7, title:'第 7 回', description:'聽力題庫製作中', path:'Part07/', available:false},
-  {number:8, title:'第 8 回', description:'聽力題庫製作中', path:'Part08/', available:false},
-  {number:9, title:'第 9 回', description:'聽力題庫製作中', path:'Part09/', available:false},
-  {number:10, title:'第 10 回', description:'聽力題庫製作中', path:'Part10/', available:false}
+  {number:2, title:'第 2 回', description:'完整聽力題庫・100 題（圖片與 MP3 待補）', path:'Part02/', available:true},
+  {number:3, title:'第 3 回', description:'題庫建置中・目前提供入口與說明', path:'Part03/', available:true},
+  {number:4, title:'第 4 回', description:'題庫建置中・目前提供入口與說明', path:'Part04/', available:true},
+  {number:5, title:'第 5 回', description:'題庫建置中・目前提供入口與說明', path:'Part05/', available:true},
+  {number:6, title:'第 6 回', description:'題庫建置中・目前提供入口與說明', path:'Part06/', available:true},
+  {number:7, title:'第 7 回', description:'題庫建置中・目前提供入口與說明', path:'Part07/', available:true},
+  {number:8, title:'第 8 回', description:'題庫建置中・目前提供入口與說明', path:'Part08/', available:true},
+  {number:9, title:'第 9 回', description:'題庫建置中・目前提供入口與說明', path:'Part09/', available:true},
+  {number:10, title:'第 10 回', description:'題庫建置中・目前提供入口與說明', path:'Part10/', available:true}
 ];
 const grid=document.getElementById('chapterGrid');
 for(const item of CHAPTERS){
