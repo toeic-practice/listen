@@ -192,15 +192,36 @@ stars:Object.fromEntries(asEntries(x.flags).filter(([,v])=>!!v).map(([id])=>[id,
 highlights:Object.fromEntries([...new Set(x.excerpts.map(v=>String(v.q)))].map(id=>[id,{items:x.excerpts.filter(v=>String(v.q)===id).slice(-30).map(v=>({text:String(v.text).slice(0,1200),time:String(v.time||"")}))}]))
 });
 function save(payload){if(!active||!snapshot)return;queue=queue.then(async()=>{
- const before=desired(snapshot),after=desired(payload);
- for(const type of ["answers","wrong","stars","highlights"]){
-  for(const [id,v] of Object.entries(after[type])){if(JSON.stringify(before[type][id])===JSON.stringify(v)&&type==="stars")continue;
-   if(type!=="stars"&&before[type][id]&&JSON.stringify(Object.assign({},before[type][id],{at:v.at}))===JSON.stringify(v))continue;
-   await setDoc(doc(base(active,type),id),v)}
-  for(const id of Object.keys(before[type]))if(!after[type][id])await deleteDoc(doc(base(active,type),id));
- }
- snapshot=copy(payload);
-}).catch(e=>{status.textContent="雲端寫入失敗："+(e.code||e.message);gate.hidden=false;document.body.classList.add("cloud-locked");window.listeningCloud.ready=false});}
+const before=copy(snapshot);
+const changes=[];
+const allIds=new Set([...Object.keys(before.answers),...Object.keys(payload.answers),...Object.keys(before.wrong),...Object.keys(payload.wrong),...Object.keys(before.flags),...Object.keys(payload.flags)]);
+const put=(type,id,docValue)=>changes.push({type,id,docValue});
+for(const id of allIds){
+if(!/^([1-9]|[1-9][0-9]|100)$/.test(id))continue;
+const q=Q[Number(id)-1];
+if(before.answers[id]!==payload.answers[id]){
+if(payload.answers[id])put("answers",id,{choice:payload.answers[id],correct:q.correct===payload.answers[id],at:new Date().toISOString()});
+else put("answers",id,null);
+}
+if(Boolean(before.wrong[id])!==Boolean(payload.wrong[id])){
+if(payload.wrong[id])put("wrong",id,{active:true,choice:payload.answers[id]||"A",correct:false,at:new Date().toISOString()});
+else put("wrong",id,null);
+}
+if(Boolean(before.flags[id])!==Boolean(payload.flags[id]))put("stars",id,payload.flags[id]?{marked:true}:null);
+}
+const group=arr=>{const out={};for(const x of arr){const id=String(x.q);if(!/^([1-9]|[1-9][0-9]|100)$/.test(id))continue;(out[id]??=[]).push({text:String(x.text).slice(0,1200),time:String(x.time||"")})}return out};
+const prior=group(before.excerpts),next=group(payload.excerpts);
+for(const id of new Set([...Object.keys(prior),...Object.keys(next)])){
+if(JSON.stringify(prior[id]||[])===JSON.stringify(next[id]||[]))continue;
+put("highlights",id,next[id]?.length?{items:next[id].slice(-30)}:null);
+}
+for(const {type,id,docValue} of changes){
+const ref=doc(base(active,type),id);
+if(docValue)await setDoc(ref,docValue);
+else await deleteDoc(ref);
+}
+snapshot=copy(payload);
+}).catch(err=>{status.textContent="雲端寫入失敗："+(err.code||err.message)+"。請重新連線確認紀錄。";gate.hidden=false;document.body.classList.add("cloud-locked");window.listeningCloud.ready=false});}
 window.listeningCloud={ready:false,connect,save};
 gateInput.value=JSON.parse(localStorage.getItem("toeic_listening_user_code")||'""')||"";
 mainCode.addEventListener("input",()=>{gateInput.value=mainCode.value});
