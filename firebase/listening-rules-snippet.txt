@@ -1,0 +1,57 @@
+// 請將這一段 match 貼進您現有的 Firestore rules 的
+// match /databases/{database}/documents { ... } 內部。
+// 請保留原本的 practiceCodes 規則，不要覆蓋整份檔案。
+// 限制：沿用匿名登入及代號清單，代號可被猜測，非真正的身分驗證。
+function validListeningCode(code) {
+  return code in ['1000','0520','0608','0621','0000','1014'];
+}
+function validListeningQuestion(id) {
+  return id.matches('^([1-9]|[1-9][0-9]|100)$');
+}
+function listeningMember(code) {
+  return request.auth != null && validListeningCode(code);
+}
+function listeningAnswerData() {
+  return request.resource.data.keys().hasOnly(['choice','correct','at'])
+    && request.resource.data.choice in ['A','B','C','D']
+    && request.resource.data.correct is bool
+    && request.resource.data.at is string;
+}
+function listeningStarData() {
+  return request.resource.data.keys().hasOnly(['marked'])
+    && request.resource.data.marked == true;
+}
+function listeningWrongData() {
+  return request.resource.data.keys().hasOnly(['active','choice','correct','at'])
+    && request.resource.data.active == true
+    && request.resource.data.choice in ['A','B','C','D']
+    && request.resource.data.correct is bool
+    && request.resource.data.at is string;
+}
+function listeningExcerptData() {
+  return request.resource.data.keys().hasOnly(['items'])
+    && request.resource.data.items is list
+    && request.resource.data.items.size() > 0
+    && request.resource.data.items.size() <= 30
+    && request.resource.data.size() <= 25000;
+}
+match /listeningCodes/{code}/chapters/{chapter}/answers/{id} {
+  allow get, list: if listeningMember(code) && chapter.matches('Part(0[1-9]|10)');
+  allow create, update: if listeningMember(code) && chapter.matches('Part(0[1-9]|10)') && validListeningQuestion(id) && listeningAnswerData();
+  allow delete: if listeningMember(code) && chapter.matches('Part(0[1-9]|10)') && validListeningQuestion(id);
+}
+match /listeningCodes/{code}/chapters/{chapter}/stars/{id} {
+  allow get, list: if listeningMember(code) && chapter.matches('Part(0[1-9]|10)');
+  allow create, update: if listeningMember(code) && chapter.matches('Part(0[1-9]|10)') && validListeningQuestion(id) && listeningStarData();
+  allow delete: if listeningMember(code) && chapter.matches('Part(0[1-9]|10)') && validListeningQuestion(id);
+}
+match /listeningCodes/{code}/chapters/{chapter}/wrong/{id} {
+  allow get, list: if listeningMember(code) && chapter.matches('Part(0[1-9]|10)');
+  allow create, update: if listeningMember(code) && chapter.matches('Part(0[1-9]|10)') && validListeningQuestion(id) && listeningWrongData();
+  allow delete: if listeningMember(code) && chapter.matches('Part(0[1-9]|10)') && validListeningQuestion(id);
+}
+match /listeningCodes/{code}/chapters/{chapter}/highlights/{id} {
+  allow get, list: if listeningMember(code) && chapter.matches('Part(0[1-9]|10)');
+  allow create, update: if listeningMember(code) && chapter.matches('Part(0[1-9]|10)') && validListeningQuestion(id) && listeningExcerptData();
+  allow delete: if listeningMember(code) && chapter.matches('Part(0[1-9]|10)') && validListeningQuestion(id);
+}
