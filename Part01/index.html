@@ -45,6 +45,13 @@
 .choice,.fold-content .line{font-size:14px}
 .remove-drill{display:block;margin:9px 0 1px auto;padding:7px 11px;border:1px solid #c98e99;border-radius:8px;background:#fff4f4;color:#9c344a;font-size:13px;font-weight:700}.excerpt-quote{user-select:text}
 @media(max-width:680px){.question-stem{font-size:16px}.question-number{min-width:32px;height:32px;font-size:16px}.transcript-body .passage-line,.inline-result .passage-line{font-size:15.5px}}
+
+/* 閱讀版選項：A～D 縱向全寬，統一字級及間距 */
+.choices{display:grid;grid-template-columns:minmax(0,1fr)!important;gap:8px}
+.choice{width:100%;min-height:53px;display:block;text-align:left;padding:13px 14px;font-size:16px!important;font-weight:400;line-height:1.45;border:1px solid #c6d6ef;border-radius:6px}
+.choice::first-letter{font-weight:800}
+.choice:hover:not(:disabled){background:#f2f7ff;border-color:#8caddd}
+@media(max-width:680px){.choice{font-size:15px!important;min-height:50px;padding:12px 13px}}
 </style></head><body>
 <main class="shell">
 <section class="account"><div class="account-line"><label for="code"><b>使用者代號</b></label><input id="code" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="自行輸入 4 位代號"><button id="save" class="btn primary">載入紀錄</button><div class="spacer"></div><a class="home" href="../index.html">🏠 回首頁</a><a class="exam" href="exam.html" id="examlink">📝 擬真試題</a></div><p id="accountStatus" class="acct-info">未輸入代號：使用本機暫存。</p></section>
