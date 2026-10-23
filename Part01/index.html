@@ -60,6 +60,10 @@
 /* Part 1 答後逐字稿與中文翻譯增加字級 */
 .question[data-part="1"] .inline-result .line,.question[data-part="1"] .inline-result .line span{font-size:17px!important;line-height:1.65}
 @media(max-width:680px){.question[data-part="1"] .inline-result .line,.question[data-part="1"] .inline-result .line span{font-size:16px!important}}
+
+/* 放大底部100題導覽數字 */
+.bottomnav button{font-size:16px!important;font-weight:750;min-height:38px}
+@media(max-width:680px){.bottomnav button{font-size:14px!important;min-height:36px}}
 </style></head><body>
 <main class="shell">
 <section class="account"><div class="account-line"><label for="code"><b>使用者代號</b></label><input id="code" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="自行輸入 4 位代號"><button id="save" class="btn primary">載入紀錄</button><div class="spacer"></div><a class="home" href="../index.html">🏠 回首頁</a><a class="exam" href="exam.html" id="examlink">📝 擬真試題</a></div><p id="accountStatus" class="acct-info">未輸入代號：使用本機暫存。</p></section>
