@@ -194,7 +194,7 @@ wrong:Object.fromEntries(asEntries(x.wrong).filter(([,v])=>!!v).map(([id])=>[id,
 stars:Object.fromEntries(asEntries(x.flags).filter(([,v])=>!!v).map(([id])=>[id,{marked:true}])),
 highlights:Object.fromEntries([...new Set(x.excerpts.map(v=>String(v.q)))].map(id=>[id,{items:x.excerpts.filter(v=>String(v.q)===id).slice(-30).map(v=>({text:String(v.text).slice(0,1200),time:String(v.time||"")}))}]))
 });
-function save(payload){if(!active||!snapshot)return;queue=queue.then(async()=>{
+function save(payload){if(!active||!snapshot)return;const targetCode=active;queue=queue.then(async()=>{if(active!==targetCode)return;
 const before=copy(snapshot);
 const changes=[];
 const allIds=new Set([...Object.keys(before.answers),...Object.keys(payload.answers),...Object.keys(before.wrong),...Object.keys(payload.wrong),...Object.keys(before.flags),...Object.keys(payload.flags)]);
@@ -220,11 +220,11 @@ if(JSON.stringify(prior[id]||[])===JSON.stringify(next[id]||[]))continue;
 put("highlights",id,next[id]?.length?{items:next[id].slice(-30)}:null);
 }
 for(const {type,id,docValue} of changes){
-const ref=doc(base(active,type),id);
+const ref=doc(base(targetCode,type),id);
 if(docValue)await setDoc(ref,docValue);
 else await deleteDoc(ref);
 }
-snapshot=copy(payload);
+if(active===targetCode)snapshot=copy(payload);
 }).catch(err=>{status.textContent="雲端寫入失敗："+(err.code||err.message)+"。請重新連線確認紀錄。";gate.hidden=false;document.body.classList.add("cloud-locked");window.listeningCloud.ready=false});}
 window.listeningCloud={ready:false,connect,save};
 gateInput.value=JSON.parse(localStorage.getItem("toeic_listening_user_code")||'""')||"";
