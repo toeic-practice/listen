@@ -100,8 +100,8 @@ const $=id=>document.getElementById(id);let n=1,mode="all",code="",answers={},wr
 function get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}}
 function set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 function key(k){return "toeic_listening_test01_"+(code||"local")+"_"+k}
-function persist(){set(key("answers"),answers);set(key("wrong"),wrong);set(key("marks"),flags);set(key("excerpts"),excerpts);if(window.listeningCloud?.ready)window.listeningCloud.save({answers:{...answers},wrong:{...wrong},flags:{...flags},excerpts:excerpts.map(x=>({...x}))})}
-function load(){code=get("toeic_listening_user_code","");$("code").value=code;answers=get(key("answers"),{});wrong=get(key("wrong"),{});flags=get(key("marks"),{});excerpts=get(key("excerpts"),[]);if(!Array.isArray(excerpts))excerpts=[];render();renderExcerpts()}
+function persist(){set(key("answers"),answers);set(key("wrong"),wrong);set(key("marks"),flags);set(key("excerpts"),excerpts);set(key("retry"),retryAnswers);if(window.listeningCloud?.ready)window.listeningCloud.save({answers:{...answers},wrong:{...wrong},flags:{...flags},excerpts:excerpts.map(x=>({...x})),retry:{...retryAnswers}})}
+function load(){code=get("toeic_listening_user_code","");$("code").value=code;answers=get(key("answers"),{});wrong=get(key("wrong"),{});flags=get(key("marks"),{});excerpts=get(key("excerpts"),[]);retryAnswers=get(key("retry"),{});if(!Array.isArray(excerpts))excerpts=[];render();renderExcerpts()}
 function el(tag,text,cls){let e=document.createElement(tag);if(text!==undefined&&text!==null)e.textContent=text;if(cls)e.className=cls;return e}
 function partLeader(q){return q.part>=3?Q[q.group-1]:q}
 function groupMembers(q){return q.part>=3?Q.slice(q.group-1,q.group+2):[q]}
@@ -134,12 +134,12 @@ $("prev").disabled=list.length===0||list[0]?.id===n;$("next").disabled=list.leng
 const grid=$("qgrid");grid.innerHTML="";for(const item of Q){let b=el("button",String(item.id));b.className=(item.id>=n&&item.id<=members.at(-1).id?"current ":"")+(answers[item.id]?(answers[item.id]===item.correct?"answered ":"missed "):"")+(flags[item.id]?"star":"");b.onclick=()=>{n=partLeader(item).id;render();$("workspace").scrollIntoView({behavior:"smooth",block:"start"})};grid.append(b)}
 updateStats();if(!$("overviewPanel").hidden)renderWrongList();
 if(!$("excerptPanel").hidden){$("excerptText").textContent=transcriptText(q,false);renderExcerpts()}}
-function changeMode(m){if(m!=="all"&&!allLeaders().some(q=>groupMembers(q).some(x=>m==="wrong"?!!wrong[x.id]:!!flags[x.id]))){alert(m==="wrong"?"目前沒有錯題，請先作答。":"目前沒有標記題目。");return}mode=m;if(m==="wrong")retryAnswers={};n=(listLeaders()[0]||Q[0]).id;$("overviewPanel").hidden=true;render();$("workspace").scrollIntoView({behavior:"smooth",block:"start"})}
+function changeMode(m){if(m!=="all"&&!allLeaders().some(q=>groupMembers(q).some(x=>m==="wrong"?!!wrong[x.id]:!!flags[x.id]))){alert(m==="wrong"?"目前沒有錯題，請先作答。":"目前沒有標記題目。");return}mode=m;n=(listLeaders()[0]||Q[0]).id;$("overviewPanel").hidden=true;render();$("workspace").scrollIntoView({behavior:"smooth",block:"start"})}
 $("save").onclick=()=>{let x=$("code").value.trim();if(!/^[0-9]{4}$/.test(x)){alert("請輸入指定的四位數字代號。");return}window.listeningCloud?.connect(x)};
 $("mark").onclick=()=>{let m=groupMembers(currentLeader()),flag=!m.every(q=>flags[q.id]);for(let q of m)flags[q.id]=flag;persist();render()};
 $("prev").onclick=()=>{n=nextGroup(-1);render()};$("next").onclick=()=>{n=nextGroup(1);render()};
 $("removeDrillCurrent").onclick=()=>{if(mode!=="wrong")return;const target=groupMembers(currentLeader()).find(item=>!!wrong[item.id]);if(!target)return;delete wrong[target.id];delete retryAnswers[target.id];persist();render();if(!$("overviewPanel").hidden)renderWrongList()};
-$("restartDrill").onclick=()=>{if(!actualWrong().length){alert("目前沒有錯題。");return}retryAnswers={};n=partLeader(actualWrong()[0]).id;render();$("workspace").scrollIntoView({behavior:"smooth",block:"start"})};$("allmode").onclick=()=>changeMode("all");$("wrongmode").onclick=()=>changeMode("wrong");$("starmode").onclick=()=>changeMode("starred");
+$("restartDrill").onclick=()=>{if(!actualWrong().length){alert("目前沒有錯題。");return}retryAnswers={};persist();n=partLeader(actualWrong()[0]).id;render();$("workspace").scrollIntoView({behavior:"smooth",block:"start"})};$("allmode").onclick=()=>changeMode("all");$("wrongmode").onclick=()=>changeMode("wrong");$("starmode").onclick=()=>changeMode("starred");
 $("overview").onclick=()=>{$("overviewPanel").hidden=!$("overviewPanel").hidden;$("excerptPanel").hidden=true;if(!$("overviewPanel").hidden)renderWrongList()};
 $("closeOverview").onclick=()=>{$("overviewPanel").hidden=true};
 $("excerpts").onclick=()=>{$("excerptPanel").hidden=!$("excerptPanel").hidden;$("overviewPanel").hidden=true;if(!$("excerptPanel").hidden){$("excerptText").textContent=transcriptText(currentLeader(),false);renderExcerpts()}};
@@ -167,21 +167,21 @@ let active="",snapshot=null,queue=Promise.resolve();
 const copy=x=>JSON.parse(JSON.stringify(x));
 const asEntries=obj=>Object.entries(obj).filter(([k])=>/^([1-9]|[1-9][0-9]|100)$/.test(k));
 const base=(c,type)=>collection(db,"listeningCodes",c,"chapters","Part01",type);
-function collect(){return{answers:copy(answers),wrong:copy(wrong),flags:copy(flags),excerpts:copy(excerpts)}}
-function localApply(x){answers=x.answers;wrong=x.wrong;flags=x.flags;excerpts=x.excerpts;set(key("answers"),answers);set(key("wrong"),wrong);set(key("marks"),flags);set(key("excerpts"),excerpts);render();renderExcerpts()}
+function collect(){return{answers:copy(answers),wrong:copy(wrong),flags:copy(flags),excerpts:copy(excerpts),retry:copy(retryAnswers)}}
+function localApply(x){answers=x.answers;wrong=x.wrong;flags=x.flags;excerpts=x.excerpts;retryAnswers=x.retry||{};set(key("answers"),answers);set(key("wrong"),wrong);set(key("marks"),flags);set(key("excerpts"),excerpts);set(key("retry"),retryAnswers);render();renderExcerpts()}
 function docMap(q){const obj={};q.docs.forEach(d=>obj[d.id]=d.data());return obj}
 async function connect(value){
 if(!valid.has(value)){status.textContent="代號不在核准名單中。";return}
 submit.disabled=true;status.textContent="登入 Firebase 並載入雲端紀錄...";
 try{
 await signInAnonymously(auth);
-const kinds=["answers","wrong","stars","highlights"];
+const kinds=["answers","wrong","stars","highlights","retry"];
 const results=await Promise.all(kinds.map(async k=>({kind:k,docs:(await getDocs(base(value,k))).docs})));
 const by=Object.fromEntries(results.map(r=>[r.kind,docMap(r)]));
-const data={answers:{},wrong:{},flags:{},excerpts:[]};
+const data={answers:{},wrong:{},flags:{},excerpts:[],retry:{}};
 for(const [id,d] of Object.entries(by.answers))if(d.choice)data.answers[id]=d.choice;
 for(const [id,d] of Object.entries(by.wrong))if(d.active)data.wrong[id]=true;
-for(const [id,d] of Object.entries(by.stars))if(d.marked)data.flags[id]=true;
+for(const [id,d] of Object.entries(by.retry))if(/^(?:[1-9]|[1-9][0-9]|100)$/.test(id)&&['A','B','C','D'].includes(d.choice))data.retry[id]=d.choice;for(const [id,d] of Object.entries(by.stars))if(d.marked)data.flags[id]=true;
 for(const [id,d] of Object.entries(by.highlights))if(Array.isArray(d.items))for(const item of d.items){if(item&&typeof item.text==="string")data.excerpts.push({q:Number(id),text:item.text,time:item.time||""})}
 active=value;code=value;set("toeic_listening_user_code",value);gateInput.value=value;mainCode.value=value;snapshot=copy(data);
 window.listeningCloud.ready=true;localApply(data);document.body.classList.remove("cloud-locked");gate.hidden=true;
@@ -213,6 +213,7 @@ else put("wrong",id,null);
 if(Boolean(before.flags[id])!==Boolean(payload.flags[id]))put("stars",id,payload.flags[id]?{marked:true}:null);
 }
 const group=arr=>{const out={};for(const x of arr){const id=String(x.q);if(!/^([1-9]|[1-9][0-9]|100)$/.test(id))continue;(out[id]??=[]).push({text:String(x.text).slice(0,1200),time:String(x.time||"")})}return out};
+for(const id of new Set([...Object.keys(before.retry||{}),...Object.keys(payload.retry||{})])){if(!/^([1-9]|[1-9][0-9]|100)$/.test(id))continue;if((before.retry||{})[id] !== (payload.retry||{})[id])put("retry",id,payload.retry?.[id]?{choice:payload.retry[id],at:new Date().toISOString()}:null)}
 const prior=group(before.excerpts),next=group(payload.excerpts);
 for(const id of new Set([...Object.keys(prior),...Object.keys(next)])){
 if(JSON.stringify(prior[id]||[])===JSON.stringify(next[id]||[]))continue;
